@@ -98,20 +98,20 @@ if __name__ == "__main__":
         print("추가 질문이 생성되지 않았습니다.")
 
     # 초기 질문과 후속 질문 및 답변을 결합
-    combined_query = f"초기 질문: {query}\n"
+    expanded_query = f"초기 질문: {query}\n"
     for i in range(len(follow_up_questions)):
-        combined_query += f"\n{i+1}. 질문: {follow_up_questions[i]}\n"
-        combined_query += f"답변: {answers[i]}\n"
+        expanded_query += f"\n{i+1}. 질문: {follow_up_questions[i]}\n"
+        expanded_query += f"답변: {answers[i]}\n"
 
     print("==================================RESEARCH==================================")
     research = GetDeepResearch(
-        email="test@test.com", query=combined_query, follow_up_questions=[], follow_up_answers=[])
+        email="test@test.com", query=expanded_query, follow_up_questions=[], follow_up_answers=[])
     deep_research_result = get_deep_research(research)
     print(deep_research_result)
 
     print("==================================REPORT==================================")
     report_info = GetReport(email="test@test.com",
-                       prompt=combined_query,
+                       prompt=expanded_query,
                        learnings=deep_research_result["learnings"],
                        visited_papers=deep_research_result["visited_papers"])
     report = get_report(report_info)
