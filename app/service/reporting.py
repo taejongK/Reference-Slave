@@ -33,12 +33,29 @@ def write_final_report(
         {system_prompt}
 
         ### Instruction:
-        Based on the research results, write a final report for the following user-provided prompt.
+        Based on the research results, write a final report in the format of a review paper for the following user-provided prompt.
         The report should be detailed in Markdown format and exceed 6,000 characters.
+        The answer should be in Korean.
+
+        The review paper should include the following sections:
+
+        1. **서론 (Introduction)**:
+        - 연구의 배경과 목적을 설명합니다.
+        - 연구의 중요성과 관련된 기존 연구를 간략히 소개합니다.
+
+        2. **본론 (Main Body)**:
+        - 연구 결과를 상세히 설명합니다.
+        - 각 연구 결과에 대한 분석과 해석을 포함합니다.
+        - 관련된 학문적 논의를 포함합니다.
+
+        3. **결론 (Conclusion)**:
+        - 연구의 주요 발견을 요약합니다.
+        - 연구의 한계와 향후 연구 방향을 제안합니다.
+
         Include all learnings obtained from the research:\n\n
         <prompt>{prompt}</prompt>\n\n
 
-        The following are all the learnings obtained from the research:\n\n<learnings>\n{research_componant}</learnings> 
+        The following are all the learnings obtained from the research:\n\n<learnings>\n{research_componant}</learnings>
         """
     ).partial(
         system_prompt=system_prompt(),
