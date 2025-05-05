@@ -47,15 +47,38 @@ def display_chatbot_response(response):
         if st.session_state.status == "follow_up_questions":
             for idx, question in enumerate(response.json().get("follow_up_questions", [])):
                 st.markdown(f"{idx+1}. {question}", unsafe_allow_html=True)
-            # st.session_state.status = "deep_research"
+                st.session_state.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": question
+                    }
+                )
 
         if st.session_state.status == "deep_research":
             for learning, paper in zip(response.json().get("learnings", []), response.json().get("visited_papers", [])):
                 st.markdown(learning, unsafe_allow_html=True)
                 st.markdown(paper, unsafe_allow_html=True)
+                st.session_state.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": learning
+                    }
+                )
+                st.session_state.messages.append(
+                    {
+                        "role": "assistant",
+                        "content": paper
+                    }
+                )
         if st.session_state.status == "report":
             st.markdown(response.json().get(
                 "report", ""), unsafe_allow_html=True)
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": response.json().get("report", "")
+                }
+            )
 
         return
 
@@ -97,15 +120,17 @@ def handle_user_input(user_input):
             st.session_state.follow_up_answers = []  # 답변
 
         elif st.session_state.status == "follow_up_questions":
-            st.session_state.follow_up_answers = organize_follow_up_answers(
+            st.session_state.follow_up_answers = organize_follow_up_answers(  # 답변 갈무리
                 st.session_state.follow_up_questions, user_input)
+            print(st.session_state.follow_up_answers)
             response = make_api_request("deep_research", {
                 "query": st.session_state.initial_question,
                 "follow_up_questions": st.session_state.follow_up_questions,
                 "follow_up_answers": st.session_state.follow_up_answers
             })
-            st.session_state.status = "deep_research"
-        elif st.session_state.status == "deep_research":
+            # print(response.json())
+        #     st.session_state.status = "deep_research"
+        # elif st.session_state.status == "deep_research":
             response = make_api_request("report", {
                 "prompt": st.session_state.initial_question,
                 "learnings": response.json().get("learnings", []),
@@ -148,29 +173,33 @@ def organize_follow_up_answers(follow_up_questions: List[str], user_input: str):
     Returns:
         str: 정돈된 답변 문자열
     """
-    follow_up_questions_str = "\n".join(
-        [f"{idx+1}. {question}" for idx, question in enumerate(follow_up_questions)])
-    prompt = PromptTemplate(
-        input_variables=["user_input", "follow_up_questions"],
-        template="""
-        ### System:
-        follow_up_question에 대한 답변인 user_input을 list 형태로 반환하세요.
-        ### follow_up_questions:
-        {follow_up_questions}
-        ### user_input:
-        {user_input}
-        ### Answer:
-        """
-    )
-    parser = ListOutputParser()
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
-    chain = prompt | llm | parser
+    try:
+        follow_up_questions_str = "\n".join(
+            [f"{idx+1}. {question}" for idx, question in enumerate(follow_up_questions)])
+        prompt = PromptTemplate(
+            input_variables=["user_input", "follow_up_questions"],
+            template="""
+            ### System:
+            follow_up_question에 대한 답변인 user_input을 list 형태로 반환하세요.
+            ### follow_up_questions:
+            {follow_up_questions}
+            ### user_input:
+            {user_input}
+            ### Answer:
+            """
+        )
+        parser = ListOutputParser()
+        llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite")
+        chain = prompt | llm | parser
 
-    return chain.invoke({"user_input": user_input, "follow_up_questions": follow_up_questions_str})
+        return chain.invoke({"user_input": user_input, "follow_up_questions": follow_up_questions_str})
+    except Exception as e:
+        print(f"Error in organizing follow-up answers: {e}")
+        return []
 
 
 ############################# 챗봇 인터페이스 #############################
-st.title("BA 챗봇")
+st.title("Research Assistant")
 
 # 상태 초기화
 if "status" not in st.session_state:

@@ -35,7 +35,6 @@ def write_final_report(
         ### Instruction:
         Based on the research results, write a final report in the format of a review paper for the following user-provided prompt.
         The report should be detailed in Markdown format and exceed 6,000 characters.
-        The answer should be in Korean.
 
         The review paper should include the following sections:
 
@@ -56,6 +55,9 @@ def write_final_report(
         <prompt>{prompt}</prompt>\n\n
 
         The following are all the learnings obtained from the research:\n\n<learnings>\n{research_componant}</learnings>
+        The review paper must strictly be in Korean.
+        The review paper must be in Markdown format.
+        ### Review Paper:
         """
     ).partial(
         system_prompt=system_prompt(),

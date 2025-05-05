@@ -43,7 +43,7 @@ class DeepResearchResult(BaseModel):
 @research_router.post("/deep-research", response_model=DeepResearchResult)
 def get_deep_research(research: GetDeepResearch):
     try:
-        model_name = "gemini-2.0-flash-lite"
+        model_name = "gemini-2.0-flash"
         deep_research_result = deep_research(
             query=research.query,
             breadth=3,
