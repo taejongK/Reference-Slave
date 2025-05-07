@@ -42,10 +42,17 @@ class DeepResearchResult(BaseModel):
 
 @research_router.post("/deep-research", response_model=DeepResearchResult)
 def get_deep_research(research: GetDeepResearch):
+    query = research.query
+    query += "\n ### Follow_up_questions: \n"
+    for follow_up_question in research.follow_up_questions:
+        query += f"{follow_up_question}\n"
+    query += "\n ### Follow_up_answers: \n"
+    for follow_up_answer in research.follow_up_answers:
+        query += f"{follow_up_answer}\n"
     try:
         model_name = "gemini-2.0-flash"
         deep_research_result = deep_research(
-            query=research.query,
+            query=query,
             breadth=3,
             depth=2,
             model_name=model_name

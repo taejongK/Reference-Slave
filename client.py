@@ -45,14 +45,17 @@ def display_chatbot_response(response):
         # response_area.markdown(response, unsafe_allow_html=True)
 
         if st.session_state.status == "follow_up_questions":
+            questions = ""
             for idx, question in enumerate(response.json().get("follow_up_questions", [])):
-                st.markdown(f"{idx+1}. {question}", unsafe_allow_html=True)
-                st.session_state.messages.append(
-                    {
-                        "role": "assistant",
-                        "content": question
-                    }
-                )
+                questions += f"{idx+1}. {question}\n"
+            st.markdown(questions, unsafe_allow_html=True)
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": questions
+                }
+            )
+            
 
         if st.session_state.status == "deep_research":
             for learning, paper in zip(response.json().get("learnings", []), response.json().get("visited_papers", [])):
@@ -106,6 +109,7 @@ def handle_user_input(user_input):
         }
     )
 
+
     # API 요청 중에 스피너 표시
     with st.spinner("챗봇이 응답 중입니다..."):
         # 챗봇 응답 요청
@@ -117,24 +121,28 @@ def handle_user_input(user_input):
             st.session_state.initial_question = user_input
             st.session_state.follow_up_questions = response.json().get(
                 "follow_up_questions", [])  # 추가 질문
-            st.session_state.follow_up_answers = []  # 답변
+            # st.session_state.follow_up_answers = []  # 답변
 
         elif st.session_state.status == "follow_up_questions":
             st.session_state.follow_up_answers = organize_follow_up_answers(  # 답변 갈무리
                 st.session_state.follow_up_questions, user_input)
-            print(st.session_state.follow_up_answers)
+            print("follow_up_answers: ", st.session_state.follow_up_answers)
             response = make_api_request("deep_research", {
                 "query": st.session_state.initial_question,
                 "follow_up_questions": st.session_state.follow_up_questions,
                 "follow_up_answers": st.session_state.follow_up_answers
             })
-            # print(response.json())
-        #     st.session_state.status = "deep_research"
-        # elif st.session_state.status == "deep_research":
+            
+            # 결과 저장
+            st.session_state.learnings = response.json().get("learnings", [])
+            st.session_state.visited_papers = response.json().get("visited_papers", [])
+            st.session_state.status = "deep_research"
+            
+        elif st.session_state.status == "deep_research":
             response = make_api_request("report", {
                 "prompt": st.session_state.initial_question,
-                "learnings": response.json().get("learnings", []),
-                "visited_papers": response.json().get("visited_papers", [])
+                "learnings": st.session_state.learnings,
+                "visited_papers": st.session_state.visited_papers
             })
             st.session_state.status = "report"
 
@@ -181,6 +189,7 @@ def organize_follow_up_answers(follow_up_questions: List[str], user_input: str):
             template="""
             ### System:
             follow_up_question에 대한 답변인 user_input을 list 형태로 반환하세요.
+            만약 답변이 follow_up_question에 대한 답변이 아니라면 임의로 답변을 작성하세요.
             ### follow_up_questions:
             {follow_up_questions}
             ### user_input:
@@ -223,3 +232,5 @@ else:
 
 if user_input:
     handle_user_input(user_input)
+    print("status: ", st.session_state.status)
+    print("user_input: ", user_input)
